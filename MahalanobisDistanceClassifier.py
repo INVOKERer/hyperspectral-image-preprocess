@@ -38,6 +38,5 @@ def imgClass(file_dir):
 
 if __name__ == '__main__':
     imgWay = r'E:\HE+CAM5\PreproEasy'
-    # img255 = iF.antiNorm(imgOri)
-    img = imgClass(imgWay)
+    imgClass(imgWay)
 

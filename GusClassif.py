@@ -4,9 +4,9 @@ import numpy as np
 import os
 
 
-def classify():
-    img = open_image(r'E:\HE+CAM5\PreproEasy\HE_CAM52_mono_E_roi1_prePro.hdr').load()
-    gt1 = cv2.imread(r'E:\HE+CAM5\PreproEasy\rgb-down\roi1_SVM.jpg')
+def classify(img, gt):
+    img = open_image(img).load()
+    gt1 = cv2.imread(gt)
     gt = np.asarray(gt1[:, :, 0])
     (m, n) = gt.shape
     for i in range(m):
@@ -18,23 +18,35 @@ def classify():
 
     classes = create_training_classes(img, gt)
     gmlc = GaussianClassifier(classes)
+    # gmlc = MahalanobisDistanceClassifier(classes)
     return gmlc
 
 
-def imgClass(file_dir):
-    gmlc = classify()
+def imgClass(imgxway, gtway1, gtway2, file_dir, out_dir=None):
+    if out_dir is None:
+        out_dir = file_dir
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+    gmlc1 = classify(imgxway, gtway1)
+    gmlc2 = classify(imgxway, gtway2)
     for files in os.listdir(file_dir):
         # 当前文件夹所有文件
         if files.endswith('.hdr'):  # 判断是否以.hdr结尾
             file = file_dir + '\\' + files
-            img2 = open_image(file).load()
-            clmap = gmlc.classify_image(img2)
+            img = open_image(file).load()
+            clmap1 = gmlc1.classify_image(img)
+            clmap2 = gmlc2.classify_image(img)
             (filename, extension) = os.path.splitext(files)
-            outputway = r'E:\HE+CAM5\PreproEasy\rgb-down\testa\{a}.jpg'.format(a=filename)
+            outputway = out_dir + '\\{a}.jpg'.format(a=filename)
+            clmap = cv2.bitwise_or(clmap1, clmap2)
             save_rgb(outputway, clmap)
 
 
 if __name__ == '__main__':
-    imgWay = r'E:\HE+CAM5\PreproEasy'
-    img = imgClass(imgWay)
+    imgWay = r'E:\HE+CAM5\PreproEasy'                                      # 需要分类的图片所在文件夹
+    outWay = r'E:\HE+CAM5\PreproEasy\res'                                  # 分类结果输出文件夹（可不选）
+    img_way = r'E:\HE+CAM5\PreproEasy\HE_CAM52_mono_E_roi1_prePro.hdr'     # 训练图片路径
+    gt_way1 = r'E:\HE+CAM5\PreproEasy\rgb-down\roi1_SVM.jpg'                            # 训练图片掩膜路径
+    gt_way2 = r'E:\HE+CAM5\PreproEasy\rgb-down\roi1_SVMcvtnot.jpg'
+    imgClass(img_way, gt_way1, gt_way2, imgWay, outWay)
 
